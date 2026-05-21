@@ -1,0 +1,12 @@
+node_modules/
+android/
+ios/
+.DS_Store
+*.log
+www/data.jsx
+www/ui.jsx
+www/etiqueta.jsx
+www/screens-main.jsx
+www/screens-flows.jsx
+www/screens-admin.jsx
+preview.html

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#091426" />
+<title>Salvallanta - Inventario</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#fbf8fa', surface: '#fbf8fa',
+          'surface-lo': '#f5f3f4', 'surface-mid': '#f0edef', 'surface-hi': '#eae7e9', 'surface-white': '#ffffff',
+          ink: '#1b1b1d', 'ink-soft': '#45474c',
+          outline: '#75777d', 'outline-soft': '#c5c6cd',
+          primary: '#091426', 'primary-2': '#1e293b', 'primary-soft': '#d8e3fb', 'primary-mid': '#bcc7de',
+          accent: '#c98a2a', 'accent-soft': '#fadfb8',
+          ok: '#1f8a5b', 'ok-soft': '#d6f0e1',
+          warn: '#c98a2a', 'warn-soft': '#fde7c2',
+          err: '#ba1a1a', 'err-soft': '#ffdad6',
+        },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        boxShadow: {
+          card: '0 1px 2px rgba(9,20,38,0.04), 0 4px 14px rgba(9,20,38,0.06)',
+          press: '0 2px 4px rgba(9,20,38,0.16)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background: #fbf8fa; margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  input, textarea, [contenteditable] { user-select: text; -webkit-user-select: text; }
+  #root { height: 100%; width: 100%; }
+  .ms { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal;
+        line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block;
+        white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .ms-fill { font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+  .phone-scroll { scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+  .phone-scroll::-webkit-scrollbar { width: 4px; }
+  .phone-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+  .screen-enter { animation: fadeUp 0.28s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-enter { animation: scaleIn 0.18s ease; }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+  .toast-enter { animation: toastIn 0.3s ease; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-12px) translateX(-50%); } to { opacity: 1; transform: translateY(0) translateX(-50%); } }
+  .ph-stripes { background-image: repeating-linear-gradient(135deg, #e4e2e3 0 8px, #eae7e9 8px 16px); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="etiqueta.jsx"></script>
+<script type="text/babel" src="screens-main.jsx"></script>
+<script type="text/babel" src="screens-flows.jsx"></script>
+<script type="text/babel" src="screens-admin.jsx"></script>
+<script type="text/babel" src="app-mobile.jsx"></script>
+</body>
+</html>

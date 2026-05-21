@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salvallanta - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-variant": "#e4e2e3",
+                        "tertiary-container": "#35260c",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "inverse-surface": "#303032",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#54647a",
+                        "primary-fixed": "#d8e3fb",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "primary": "#091426",
+                        "error-container": "#ffdad6",
+                        "background": "#fbf8fa",
+                        "secondary": "#505f76",
+                        "secondary-container": "#d0e1fb",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f3f0f2",
+                        "inverse-primary": "#bcc7de",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-container-highest": "#e4e2e3",
+                        "outline-variant": "#c5c6cd",
+                        "on-primary-container": "#8590a6",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-background": "#1b1b1d",
+                        "tertiary": "#1e1200",
+                        "surface-container": "#f0edef",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#111c2d",
+                        "surface-bright": "#fbf8fa",
+                        "primary-container": "#1e293b",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#fadfb8",
+                        "surface-container-low": "#f5f3f4",
+                        "outline": "#75777d",
+                        "surface": "#fbf8fa",
+                        "on-tertiary-fixed-variant": "#564427",
+                        "tertiary-fixed-dim": "#ddc39d",
+                        "on-surface": "#1b1b1d",
+                        "on-tertiary-container": "#a38c6a",
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#545f73",
+                        "surface-dim": "#dcd9db",
+                        "primary-fixed-dim": "#bcc7de",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#271902",
+                        "surface-container-high": "#eae7e9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "element-gap": "16px",
+                        "form-stack": "24px",
+                        "input-height": "48px",
+                        "container-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "input-text": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-bold": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md-mobile": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "input-text": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fbf8fa;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-container-padding h-input-height fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full active:opacity-70">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-headline-md-mobile font-headline-md font-bold text-primary">Salvallanta</h1>
+</div>
+<button class="text-primary hover:bg-surface-container-low transition-colors p-2 rounded-full active:opacity-70">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-20 pb-24 px-container-padding">
+<!-- Welcome Hero Section -->
+<div class="mb-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-2">Panel de Control</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Bienvenido al sistema de inventario industrial.</p>
+</div>
+<!-- Bento Grid / Menu Tiles -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-element-gap">
+<!-- Tile: Agregar Llantas -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-all active:scale-95 duration-100 group shadow-sm">
+<div class="bg-secondary-container text-on-secondary-container w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="add_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+</div>
+<span class="font-label-bold text-label-bold text-primary uppercase tracking-wider">Agregar Llantas</span>
+</div>
+<!-- Tile: Consultar Llantas -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-all active:scale-95 duration-100 group shadow-sm">
+<div class="bg-secondary-container text-on-secondary-container w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="search">search</span>
+</div>
+<span class="font-label-bold text-label-bold text-primary uppercase tracking-wider">Consultar Llantas</span>
+</div>
+<!-- Tile: Usuarios -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-all active:scale-95 duration-100 group shadow-sm">
+<div class="bg-secondary-container text-on-secondary-container w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="group" data-weight="fill" style="font-variation-settings: 'FILL' 1;">group</span>
+</div>
+<span class="font-label-bold text-label-bold text-primary uppercase tracking-wider">Usuarios</span>
+</div>
+<!-- Tile: Catálogos -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-center hover:bg-surface-container-low transition-all active:scale-95 duration-100 group shadow-sm">
+<div class="bg-secondary-container text-on-secondary-container w-16 h-16 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="inventory_2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<span class="font-label-bold text-label-bold text-primary uppercase tracking-wider">Catálogos</span>
+</div>
+</div>
+<!-- Featured Visual Card (Glassmorphism inspired industrial context) -->
+<div class="mt-8 relative overflow-hidden rounded-xl h-48 border border-outline-variant bg-primary">
+<img class="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay" data-alt="A professional warehouse environment for automotive tires with rows of high-quality rubber tires organized on metallic industrial racks. The lighting is cool and professional, emphasizing a modern industrial and corporate atmosphere with deep charcoal and blue tones. The scene is clean, utilitarian, and represents efficient inventory management in a industrial setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL3XT8G56OrQ3svNFqamNkfZwb_GMVA2NLOWO2rrHKEc4OEuQaqIkWYEKdmmtk-RQNbffdClohnfUoIVzNEahp8AB0wUCVYdLi_9FOhILeRAzS_M3q4NWwQIUiU8o1vO0jaI7JCOpdDe6vCcYYrTiUXGO_qOk_1c7G5ZfK2ol9lifsw9SPZL4chjTh0Sm9s-6DpbbexvQ5AbUeaa4Ncyx5G0GazrYjqP6JRAGvZ5pVQbNPK8bBQqdMwV8vzOyzDz93_ZaUTzfxIoA"/>
+<div class="relative z-10 p-6 h-full flex flex-col justify-end">
+<h3 class="font-headline-md text-white">Estado del Inventario</h3>
+<p class="text-white opacity-80 font-caption">Actualizado hace 15 minutos</p>
+</div>
+</div>
+<!-- Logout Section (Bottom aligned within content but above nav) -->
+<div class="mt-8 pt-8">
+<button class="w-full flex items-center justify-center gap-3 py-4 text-error bg-error-container/20 border border-error/20 rounded-xl hover:bg-error-container/40 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-bold uppercase">Salir</span>
+</button>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component) -->
+<nav class="bg-surface fixed bottom-0 w-full z-50 border-t border-outline-variant shadow-lg flex justify-around items-center h-16 pb-safe">
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl py-1 px-4 transition-all scale-95 duration-100" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard" data-weight="fill" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-caption text-caption">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-caption text-caption">Consultar</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-caption text-caption">Vender</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-caption text-caption">Ajustes</span>
+</a>
+</nav>
+</body></html>

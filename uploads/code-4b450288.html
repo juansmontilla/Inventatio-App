@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salvallanta - Consultar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-variant": "#e4e2e3",
+                        "tertiary-container": "#35260c",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "inverse-surface": "#303032",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#54647a",
+                        "primary-fixed": "#d8e3fb",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "primary": "#091426",
+                        "error-container": "#ffdad6",
+                        "background": "#fbf8fa",
+                        "secondary": "#505f76",
+                        "secondary-container": "#d0e1fb",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f3f0f2",
+                        "inverse-primary": "#bcc7de",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-container-highest": "#e4e2e3",
+                        "outline-variant": "#c5c6cd",
+                        "on-primary-container": "#8590a6",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-background": "#1b1b1d",
+                        "tertiary": "#1e1200",
+                        "surface-container": "#f0edef",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#111c2d",
+                        "surface-bright": "#fbf8fa",
+                        "primary-container": "#1e293b",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#fadfb8",
+                        "surface-container-low": "#f5f3f4",
+                        "outline": "#75777d",
+                        "surface": "#fbf8fa",
+                        "on-tertiary-fixed-variant": "#564427",
+                        "tertiary-fixed-dim": "#ddc39d",
+                        "on-surface": "#1b1b1d",
+                        "on-tertiary-container": "#a38c6a",
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#545f73",
+                        "surface-dim": "#dcd9db",
+                        "primary-fixed-dim": "#bcc7de",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#271902",
+                        "surface-container-high": "#eae7e9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "element-gap": "16px",
+                        "form-stack": "24px",
+                        "input-height": "48px",
+                        "container-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "input-text": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-bold": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "input-text": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar Shell -->
+<header class="bg-surface dark:bg-surface-dim docked full-width top-0 z-50 border-b border-outline-variant">
+<div class="flex justify-between items-center w-full px-container-padding h-input-height">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low transition-colors p-1 rounded-full" data-icon="menu">menu</button>
+<h1 class="text-headline-md-mobile font-headline-md font-bold text-primary dark:text-primary-fixed">Salvallanta</h1>
+</div>
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed hover:bg-surface-container-low transition-colors p-1 rounded-full" data-icon="account_circle">account_circle</button>
+</div>
+</header>
+<main class="max-w-md mx-auto px-container-padding py-form-stack space-y-form-stack">
+<!-- Search Section -->
+<section class="space-y-4">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Consultar Llantas</h2>
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full h-input-height pl-10 pr-4 bg-white border border-outline-variant rounded-lg font-input-text text-input-text focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/10 transition-all placeholder:text-outline/60" placeholder="Código, marca o referencia" type="text"/>
+</div>
+<button class="h-input-height px-6 bg-primary text-on-primary font-label-bold text-label-bold rounded-lg shadow-sm active:scale-95 transition-all">
+                    Buscar
+                </button>
+</div>
+</section>
+<!-- Results List -->
+<section class="space-y-4">
+<p class="font-label-bold text-label-bold text-outline uppercase tracking-wider">Resultados (2)</p>
+<!-- Result Card 1 -->
+<div class="bg-white border border-outline-variant rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary mb-1">215 / 55 R18</h3>
+<p class="font-label-bold text-label-bold text-on-surface">Michelin</p>
+<p class="font-body-lg text-body-lg text-secondary">Primacy 4</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-caption font-caption rounded-full">Usada</span>
+<span class="px-3 py-1 bg-error-container text-on-error-container text-caption font-caption rounded-full">Reparada</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-3 border-t border-outline-variant">
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">DOT</p>
+<p class="font-label-bold text-label-bold bg-surface-container-low px-2 py-1 rounded inline-block">2324</p>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Ubicación</p>
+<div class="flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="location_on">location_on</span>
+<span class="font-label-bold text-label-bold">Piso 1</span>
+</div>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Código</p>
+<p class="font-label-bold text-label-bold text-primary">LLV-5134</p>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Disponibilidad</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span class="font-label-bold text-label-bold text-primary">1 unidad</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Result Card 2 -->
+<div class="bg-white border border-outline-variant rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary mb-1">215 / 55 R18</h3>
+<p class="font-label-bold text-label-bold text-on-surface">Bridgestone</p>
+<p class="font-body-lg text-body-lg text-secondary">Turanza T005 A</p>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-caption font-caption rounded-full">Usada</span>
+<span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant text-caption font-caption rounded-full">Excelente</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-3 border-t border-outline-variant">
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">DOT</p>
+<p class="font-label-bold text-label-bold bg-surface-container-low px-2 py-1 rounded inline-block">2119</p>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Ubicación</p>
+<div class="flex items-center gap-1 text-on-surface">
+<span class="material-symbols-outlined text-[18px]" data-icon="location_on">location_on</span>
+<span class="font-label-bold text-label-bold">Piso 2</span>
+</div>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Código</p>
+<p class="font-label-bold text-label-bold text-primary">LLV-5113</p>
+</div>
+<div class="space-y-1">
+<p class="text-caption font-caption text-outline uppercase">Disponibilidad</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-bold text-label-bold text-primary">1 unidad</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell -->
+<nav class="bg-surface dark:bg-surface-dim fixed bottom-0 w-full z-50 border-t border-outline-variant shadow-lg md:hidden">
+<div class="flex justify-around items-center w-full h-16 pb-safe">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-caption text-caption">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl py-1 px-4 hover:bg-surface-container-high transition-all active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="search" style="font-variation-settings: 'FILL' 1;">search</span>
+<span class="font-caption text-caption">Consultar</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-caption text-caption">Vender</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant py-1 px-4 hover:bg-surface-container-high transition-all active:scale-95 duration-100">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-caption text-caption">Ajustes</span>
+</button>
+</div>
+</nav>
+</body></html>

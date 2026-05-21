@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Setup JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install npm dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Sync web sources -> mobile/www
+        working-directory: mobile
+        run: npm run sync:web
+
+      - name: Add Android platform (npx cap add android)
+        working-directory: mobile
+        run: npx cap add android
+
+      - name: Capacitor sync
+        working-directory: mobile
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        working-directory: mobile/android
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Stage APK
+        run: |
+          mkdir -p artifacts
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk artifacts/salvallanta-debug.apk
+          ls -lh artifacts/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: salvallanta-apk
+          path: artifacts/salvallanta-debug.apk
+          if-no-files-found: error
+          retention-days: 30

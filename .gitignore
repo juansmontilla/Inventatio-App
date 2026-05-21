@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+
+# Builds
+mobile/android/
+mobile/ios/
+mobile/preview.html
+mobile/www/data.jsx
+mobile/www/ui.jsx
+mobile/www/etiqueta.jsx
+mobile/www/screens-main.jsx
+mobile/www/screens-flows.jsx
+mobile/www/screens-admin.jsx
+
+# Lockfile opcional (lo dejamos versionado para CI caching)
+# package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp

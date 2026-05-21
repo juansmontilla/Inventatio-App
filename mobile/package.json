@@ -1,0 +1,30 @@
+{
+  "name": "salvallanta-mobile",
+  "version": "1.0.0",
+  "description": "App movil de inventario Salvallantas",
+  "private": true,
+  "scripts": {
+    "sync:web": "node scripts/sync-web.js",
+    "preview": "node scripts/bundle-preview.js",
+    "build:web": "node scripts/sync-web.js && node scripts/bundle-preview.js",
+    "serve": "npx --yes http-server www -p 5173 -c-1 -o",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npm run sync:web && npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/camera": "^6.1.0",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/preferences": "^6.0.2",
+    "@capacitor/splash-screen": "^6.0.2",
+    "@capacitor/status-bar": "^6.0.1",
+    "@capacitor-community/bluetooth-le": "^7.1.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

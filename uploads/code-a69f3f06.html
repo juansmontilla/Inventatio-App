@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-variant": "#e4e2e3",
+                    "tertiary-container": "#35260c",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#3c475a",
+                    "inverse-surface": "#303032",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#54647a",
+                    "primary-fixed": "#d8e3fb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "primary": "#091426",
+                    "error-container": "#ffdad6",
+                    "background": "#fbf8fa",
+                    "secondary": "#505f76",
+                    "secondary-container": "#d0e1fb",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f3f0f2",
+                    "inverse-primary": "#bcc7de",
+                    "secondary-fixed": "#d3e4fe",
+                    "surface-container-highest": "#e4e2e3",
+                    "outline-variant": "#c5c6cd",
+                    "on-primary-container": "#8590a6",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-background": "#1b1b1d",
+                    "tertiary": "#1e1200",
+                    "surface-container": "#f0edef",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#111c2d",
+                    "surface-bright": "#fbf8fa",
+                    "primary-container": "#1e293b",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed": "#fadfb8",
+                    "surface-container-low": "#f5f3f4",
+                    "outline": "#75777d",
+                    "surface": "#fbf8fa",
+                    "on-tertiary-fixed-variant": "#564427",
+                    "tertiary-fixed-dim": "#ddc39d",
+                    "on-surface": "#1b1b1d",
+                    "on-tertiary-container": "#a38c6a",
+                    "on-surface-variant": "#45474c",
+                    "surface-tint": "#545f73",
+                    "surface-dim": "#dcd9db",
+                    "primary-fixed-dim": "#bcc7de",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#271902",
+                    "surface-container-high": "#eae7e9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "element-gap": "16px",
+                    "form-stack": "24px",
+                    "input-height": "48px",
+                    "container-padding": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "input-text": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-bold": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md-mobile": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "input-text": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-bold": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-20">
+<!-- TopAppBar -->
+<header class="bg-surface border-b border-outline-variant fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-input-height">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<h1 class="font-headline-md text-headline-md-mobile font-bold text-primary">Salvallanta</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 px-container-padding max-w-2xl mx-auto">
+<!-- Header Section -->
+<section class="mb-form-stack">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-2">Administración</h2>
+<p class="font-body-lg text-on-surface-variant text-sm">Gestione los usuarios del sistema y la base de datos de catálogos industriales.</p>
+</section>
+<!-- Search / Filter Area -->
+<div class="mb-form-stack">
+<div class="relative w-full h-input-height border border-outline-variant bg-surface-container-lowest rounded-lg flex items-center px-4">
+<span class="material-symbols-outlined text-outline mr-3" data-icon="search">search</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-input-text font-input-text placeholder-outline-variant" placeholder="Buscar usuarios o productos..." type="text"/>
+</div>
+</div>
+<!-- Section: Usuarios -->
+<section class="mb-form-stack">
+<div class="flex justify-between items-center mb-element-gap">
+<h3 class="font-label-bold text-label-bold text-on-surface uppercase tracking-wider">Usuarios</h3>
+<button class="flex items-center gap-1 text-primary font-label-bold text-sm">
+<span class="material-symbols-outlined text-lg" data-icon="person_add">person_add</span>
+                    Nuevo
+                </button>
+</div>
+<div class="space-y-base">
+<!-- User Item 1 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-xl hover:bg-surface-container-high transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="person">person</span>
+</div>
+<div>
+<p class="font-label-bold text-on-surface">Ricardo Mendoza</p>
+<p class="font-caption text-on-surface-variant">Admin • Activo</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container hover:text-on-error-container rounded-full text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- User Item 2 -->
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-variant rounded-xl hover:bg-surface-container-high transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="person">person</span>
+</div>
+<div>
+<p class="font-label-bold text-on-surface">Elena Vargas</p>
+<p class="font-caption text-on-surface-variant">Operador • Activo</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2 hover:bg-error-container hover:text-on-error-container rounded-full text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Catálogos -->
+<section class="mb-form-stack">
+<div class="flex justify-between items-center mb-element-gap">
+<h3 class="font-label-bold text-label-bold text-on-surface uppercase tracking-wider">Catálogos</h3>
+<button class="flex items-center gap-1 text-primary font-label-bold text-sm">
+<span class="material-symbols-outlined text-lg" data-icon="add_circle">add_circle</span>
+                    Añadir
+                </button>
+</div>
+<!-- Catalog Cards Grid (Mobile list focus) -->
+<div class="grid grid-cols-1 gap-base">
+<!-- Catalog Item 1 -->
+<div class="p-4 bg-surface border border-outline-variant rounded-xl shadow-sm hover:border-primary transition-all flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="Tire Inventory" class="w-full h-full object-cover" data-alt="A professional close-up photograph of a heavy-duty industrial tire showing deep, intricate tread patterns. The lighting is crisp and cool, highlighting the metallic reflections and the sturdy rubber texture. The overall aesthetic is industrial, clean, and corporate, emphasizing durability and precision engineering. The background is a blurred warehouse setting with soft industrial blue tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoxtMcZIOFzRjx78bPwAy0H5agO4MtzH1Cv_kSTR-TaUd--XFZRp8ff0rfz_mUqquFqGZHSmqG-ITdLCjuQZbgoH9GozgMvuC3Hn4lGq1HjxRa7B-7wU4gajG_986Xoj6K2yO23_rUlPUWufzwwnfa6yhH639OuFsadIzluZALMFXuIXeRiXhEwYOdgGDDSUuejOA5GDKO2R1lQ32UEzHIJSSlhqK_ykg7-RhHBZJbURcbj0KUrUfp1xISQBIsHCl5yMFjrRJbl54"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-bold text-on-surface">Llantas OTR - Minería</p>
+<p class="font-caption text-on-surface-variant">42 Items • Actualizado hoy</p>
+</div>
+<div class="flex">
+<button class="p-2 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+</div>
+</div>
+<div class="mt-2 flex gap-1">
+<span class="px-2 py-0.5 bg-secondary-container text-[10px] font-bold text-on-secondary-container rounded uppercase">Crítico</span>
+<span class="px-2 py-0.5 bg-surface-variant text-[10px] font-bold text-on-surface-variant rounded uppercase">Ventas</span>
+</div>
+</div>
+</div>
+<!-- Catalog Item 2 -->
+<div class="p-4 bg-surface border border-outline-variant rounded-xl shadow-sm hover:border-primary transition-all flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+<img alt="Heavy Machinery Parts" class="w-full h-full object-cover" data-alt="A high-quality studio shot of various shiny chrome engine parts and industrial components neatly arranged on a clean white surface. The lighting is bright and high-key, creating a professional and minimalist corporate look. Accents of deep charcoal blue and light silver dominate the palette. The mood is sophisticated, technical, and highly organized, suitable for a modern industrial catalog." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAm5JNACvxIYqyOaHn92ob5TEj9ig0JVSbr5LrZ36a32qz5-tX3HrNiK5HRUGYxJpffyao6-kR6T73uXpvdAAIcgyvdXemG-EGixfgnzEkHehz-JH4BwO5dMvDH8JAlIGSvzYDIz_ELz4vyD1050ixLGKKli6YvkDATDnTo4sZzkH-NbIbNL_q5T0LQxTsU_NblUXGioi8a55qgloDUMwbfMPcA8irIt0yPS2PcrkSuj3KltS1XZg8OrjwdhR1SE6bAdoehSLUMoCE"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-bold text-on-surface">Repuestos de Suspensión</p>
+<p class="font-caption text-on-surface-variant">128 Items • Verificado</p>
+</div>
+<div class="flex">
+<button class="p-2 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+</div>
+</div>
+<div class="mt-2 flex gap-1">
+<span class="px-2 py-0.5 bg-surface-variant text-[10px] font-bold text-on-surface-variant rounded uppercase">Stock Bajo</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Database Tools Section -->
+<section class="mt-12 p-container-padding bg-on-primary-fixed-variant rounded-xl text-on-primary">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary-fixed" data-icon="database">database</span>
+<h3 class="font-label-bold text-lg">Mantenimiento de Datos</h3>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="bg-primary-container hover:bg-on-primary-container p-4 rounded-lg flex flex-col items-center justify-center transition-colors">
+<span class="material-symbols-outlined mb-2" data-icon="cloud_download">cloud_download</span>
+<span class="text-caption font-bold">Exportar CSV</span>
+</button>
+<button class="bg-primary-container hover:bg-on-primary-container p-4 rounded-lg flex flex-col items-center justify-center transition-colors">
+<span class="material-symbols-outlined mb-2" data-icon="history">history</span>
+<span class="text-caption font-bold">Ver Auditoría</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface border-t border-outline-variant shadow-lg flex justify-around items-center h-16 pb-safe">
+<div class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-caption text-caption">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+<span class="font-caption text-caption">Consultar</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant py-1 px-4">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-caption text-caption">Vender</span>
+</div>
+<!-- Active Tab: Ajustes (Administration is part of Settings/Management) -->
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl py-1 px-4">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-caption text-caption">Ajustes</span>
+</div>
+</nav>
+</body></html>
