@@ -15,6 +15,7 @@ const App = () => {
   useEffect(() => {
     (async () => {
       try {
+        await api.load(); // hidrata token desde Preferences (nativo) o localStorage
         if (api.token()) {
           const sess = await api.session();
           if (sess && sess.user) {

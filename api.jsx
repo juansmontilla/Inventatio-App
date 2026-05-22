@@ -7,35 +7,71 @@ const DEFAULT_API_URL =
 const TOKEN_KEY = 'salvallanta.token';
 const URL_KEY   = 'salvallanta.apiUrl';
 
+// Acceso al plugin nativo de Preferences (SharedPreferences en Android).
+// Si no está disponible (preview en browser), cae a localStorage.
+const prefsPlugin = () => {
+  try {
+    if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Preferences) {
+      return Capacitor.Plugins.Preferences;
+    }
+  } catch (e) {}
+  return null;
+};
+
+async function prefGet(key) {
+  const p = prefsPlugin();
+  if (p) {
+    try { const r = await p.get({ key }); return (r && r.value) || null; }
+    catch (e) { /* fallback abajo */ }
+  }
+  try { return localStorage.getItem(key) || null; }
+  catch (e) { return null; }
+}
+
+async function prefSet(key, value) {
+  const p = prefsPlugin();
+  if (p) {
+    try {
+      if (value == null) await p.remove({ key });
+      else await p.set({ key, value: String(value) });
+      return;
+    } catch (e) { /* fallback abajo */ }
+  }
+  try {
+    if (value == null) localStorage.removeItem(key);
+    else localStorage.setItem(key, String(value));
+  } catch (e) {}
+}
+
 const api = {
   _token: null,
   _url: null,
+  _loaded: false,
+
+  // Llamar UNA vez al arrancar la app. Hidrata _token y _url desde el storage persistente.
+  async load() {
+    if (this._loaded) return;
+    this._token = await prefGet(TOKEN_KEY);
+    this._url   = (await prefGet(URL_KEY)) || DEFAULT_API_URL;
+    this._loaded = true;
+  },
 
   url() {
-    if (this._url) return this._url;
-    try { this._url = localStorage.getItem(URL_KEY) || DEFAULT_API_URL; }
-    catch (e) { this._url = DEFAULT_API_URL; }
-    return this._url;
+    return this._url || DEFAULT_API_URL;
   },
 
   setUrl(u) {
     this._url = u;
-    try { localStorage.setItem(URL_KEY, u); } catch (e) {}
+    prefSet(URL_KEY, u);
   },
 
   token() {
-    if (this._token) return this._token;
-    try { this._token = localStorage.getItem(TOKEN_KEY) || null; }
-    catch (e) { this._token = null; }
     return this._token;
   },
 
   setToken(t) {
     this._token = t || null;
-    try {
-      if (t) localStorage.setItem(TOKEN_KEY, t);
-      else localStorage.removeItem(TOKEN_KEY);
-    } catch (e) {}
+    prefSet(TOKEN_KEY, t || null);
   },
 
   // Llamada genérica al backend. Usa POST con text/plain para evitar preflight CORS.
@@ -59,7 +95,6 @@ const api = {
     if (!json.ok) {
       const msg = json.error || 'Error del servidor';
       const err = new Error(msg);
-      // Auto-logout si el token venció
       if (/sesión inválida|sesión expirada|token requerido/i.test(msg)) {
         this.setToken(null);
         err.authExpired = true;
@@ -87,25 +122,25 @@ const api = {
   },
 
   // ─── Inventario ──────────────────────────────────────────
-  inventarioList: function (filtros)            { return this.call('inventario.list', filtros || {}); },
-  inventarioGet:  function (code)               { return this.call('inventario.get', { code }); },
-  inventarioCreate: function (data)             { return this.call('inventario.create', data); },
-  inventarioUpdate: function (code, data)       { return this.call('inventario.update', Object.assign({ code }, data)); },
-  inventarioDelete: function (code)             { return this.call('inventario.delete', { code }); },
+  inventarioList:   function (filtros)      { return this.call('inventario.list', filtros || {}); },
+  inventarioGet:    function (code)         { return this.call('inventario.get', { code }); },
+  inventarioCreate: function (data)         { return this.call('inventario.create', data); },
+  inventarioUpdate: function (code, data)   { return this.call('inventario.update', Object.assign({ code }, data)); },
+  inventarioDelete: function (code)         { return this.call('inventario.delete', { code }); },
 
   // ─── Ventas ──────────────────────────────────────────────
   ventasList:   function (filtros) { return this.call('ventas.list', filtros || {}); },
   ventasCreate: function (data)    { return this.call('ventas.create', data); },
 
   // ─── Usuarios ────────────────────────────────────────────
-  usuariosList:   function ()           { return this.call('usuarios.list'); },
-  usuariosCreate: function (data)       { return this.call('usuarios.create', data); },
-  usuariosUpdate: function (id, data)   { return this.call('usuarios.update', Object.assign({ id }, data)); },
-  usuariosDelete: function (id)         { return this.call('usuarios.delete', { id }); },
+  usuariosList:   function ()         { return this.call('usuarios.list'); },
+  usuariosCreate: function (data)     { return this.call('usuarios.create', data); },
+  usuariosUpdate: function (id, data) { return this.call('usuarios.update', Object.assign({ id }, data)); },
+  usuariosDelete: function (id)       { return this.call('usuarios.delete', { id }); },
 
   // ─── Listas ──────────────────────────────────────────────
-  listasGet:    function ()              { return this.call('listas.get'); },
-  listasUpdate: function (hoja, items)   { return this.call('listas.update', { hoja, items }); },
+  listasGet:    function ()            { return this.call('listas.get'); },
+  listasUpdate: function (hoja, items) { return this.call('listas.update', { hoja, items }); },
 
   // ─── Fotos ───────────────────────────────────────────────
   fotosUpload: function (base64, filename) {
