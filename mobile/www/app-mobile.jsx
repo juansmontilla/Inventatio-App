@@ -5,14 +5,31 @@ const App = () => {
   const [bootstrapping, setBootstrapping] = useState(true);
   const [bootDiag, setBootDiag] = useState({ step: 'iniciando', detail: '' });
   const [user, setUser] = useState(null);
-  const [tires, setTires] = useState(TIRES);
-  const [users, setUsers] = useState(USERS);
-  const [catalogs, setCatalogs] = useState(CATALOGS);
+
+  // Datos del backend (vacíos hasta que la app los cargue)
+  const [tires, setTires] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [catalogs, setCatalogs] = useState([]);
   const [listas, setListas] = useState(LISTAS_DEFAULT);
 
   const [stack, setStack] = useState(['login']);
+  const [selectedCode, setSelectedCode] = useState(null);
+  const [editingCode, setEditingCode] = useState(null);
+  const [lastSale, setLastSale] = useState(null);
+  const [lastSavedCode, setLastSavedCode] = useState(null);
+  const [lastSavedMode, setLastSavedMode] = useState('add');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [saving, setSaving] = useState(null); // {message: string} | null
 
-  // Auto-login si hay token guardado y todavía es válido
+  const current = stack[stack.length - 1];
+
+  const flash = (msg, kind = 'ok') => {
+    setToast({ msg, kind });
+    setTimeout(() => setToast(null), 2400);
+  };
+
+  // ─── Bootstrap: hidratar token y auto-login ──────────────────────────
   useEffect(() => {
     (async () => {
       const diag = (step, detail) => setBootDiag({ step, detail: detail || '' });
@@ -22,10 +39,7 @@ const App = () => {
         const tok = api.token();
         const plugin = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences);
         diag('token check', `plugin=${plugin ? 'sí' : 'no'} · token=${tok ? 'sí (' + tok.slice(0,8) + '...)' : 'no'}`);
-        if (!tok) {
-          // No hay sesión guardada — al login sin esperar
-          return;
-        }
+        if (!tok) return;
         diag('validando sesión', '');
         const sess = await api.session();
         if (sess && sess.user) {
@@ -38,25 +52,37 @@ const App = () => {
       } catch (e) {
         diag('error', String(e && e.message || e));
       } finally {
-        // Pequeño delay si hubo error/diagnóstico, para que el usuario lo vea
-        setTimeout(() => setBootstrapping(false), 600);
+        setTimeout(() => setBootstrapping(false), 400);
       }
     })();
   }, []);
-  const [selectedCode, setSelectedCode] = useState(null);
-  const [editingCode, setEditingCode] = useState(null);
-  const [lastSale, setLastSale] = useState(null);
-  const [lastSavedCode, setLastSavedCode] = useState(null);
-  const [lastSavedMode, setLastSavedMode] = useState('add');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [toast, setToast] = useState(null);
 
-  const current = stack[stack.length - 1];
-
-  const flash = (msg, kind = 'ok') => {
-    setToast({ msg, kind });
-    setTimeout(() => setToast(null), 2200);
+  // ─── Refrescar todos los datos del backend ───────────────────────────
+  const refreshAll = async (currentUser) => {
+    const u = currentUser || user;
+    if (!u) return;
+    try {
+      const [inv, lst, cat] = await Promise.all([
+        api.inventarioList(),
+        api.listasGet(),
+        api.catalogosList(),
+      ]);
+      setTires((inv || []).map(mapBackendTire));
+      setListas(Object.assign({}, LISTAS_DEFAULT, lst || {}));
+      setCatalogs((cat || []).map(mapBackendCatalog));
+      if (u.role === 'admin') {
+        const us = await api.usuariosList();
+        setUsers((us || []).map(mapBackendUser));
+      }
+    } catch (e) {
+      flash(e.message || 'Error cargando datos', 'err');
+    }
   };
+
+  // Cargar datos cuando user cambia (login o session restore)
+  useEffect(() => {
+    if (user) refreshAll(user);
+  }, [user]);
 
   const nav = (screen, opts = {}) => {
     if (opts.code) setSelectedCode(opts.code);
@@ -72,7 +98,7 @@ const App = () => {
     flash('Bienvenido, ' + u.name.split(' ')[0]);
   };
   const logout = () => {
-    api.logout(); // fire-and-forget; limpia el token local de inmediato
+    api.logout();
     setUser(null);
     setStack(['login']);
     setSelectedCode(null);
@@ -80,6 +106,7 @@ const App = () => {
     setLastSale(null);
     setLastSavedCode(null);
     setDrawerOpen(false);
+    setTires([]); setUsers([]); setCatalogs([]);
   };
 
   const onBottomNav = (id) => {
@@ -89,100 +116,233 @@ const App = () => {
     else nav(id, { reset: true });
   };
 
-  const handleSaveTire = (form) => {
-    if (editingCode) {
-      setTires((ts) =>
-        ts.map((t) =>
-          t.code === editingCode
-            ? {
-                ...t,
-                ref: form.ref,
-                brand: form.brand,
-                pattern: form.pattern || '—',
-                dot: form.dot,
-                qty: form.qty,
-                type: form.type,
-                estado: form.estado,
-                condicion: form.condicion,
-                ubicacion: form.ubicacion,
-                prop: form.prop,
-                profundimetro: { ...form.profundimetro },
-                photos: [...form.photos],
-                precio:
-                  typeof form.precio === 'number'
-                    ? form.precio
-                    : parseInt(form.precio) || 0,
-              }
-            : t
-        )
-      );
-      const code = editingCode;
-      setEditingCode(null);
-      setLastSavedCode(code);
-      setLastSavedMode('edit');
+  // ─── Inventario: guardar (crear o editar) ────────────────────────────
+  const handleSaveTire = async (form) => {
+    try {
+      setSaving({ message: 'Preparando fotos...' });
+      const fotoUrls = await uploadFormPhotos(form, form.code, (i, total) => {
+        setSaving({ message: `Subiendo foto ${i} / ${total}...` });
+      });
+      setSaving({ message: editingCode ? 'Actualizando llanta...' : 'Registrando llanta...' });
+      const payload = mapFormToBackendTire(form, fotoUrls);
+      let saved;
+      if (editingCode) {
+        saved = await api.inventarioUpdate(editingCode, payload);
+        const mapped = mapBackendTire(saved);
+        setTires((ts) => ts.map((t) => (t.code === editingCode ? mapped : t)));
+        const code = editingCode;
+        setEditingCode(null);
+        setLastSavedCode(code);
+        setLastSavedMode('edit');
+      } else {
+        saved = await api.inventarioCreate(payload);
+        const mapped = mapBackendTire(saved);
+        setTires((ts) => [mapped, ...ts.filter((t) => t.code !== mapped.code)]);
+        setLastSavedCode(form.code);
+        setLastSavedMode('add');
+      }
+      setSaving(null);
       setStack(['consultar', 'llanta-resumen']);
-      return;
+    } catch (e) {
+      setSaving(null);
+      flash(e.message || 'Error al guardar la llanta', 'err');
     }
-    setTires((ts) => [
-      {
-        code: form.code,
-        ref: form.ref,
-        brand: form.brand,
-        pattern: form.pattern || '—',
-        dot: form.dot,
-        qty: form.qty,
-        type: form.type,
-        estado: form.estado,
-        condicion: form.condicion,
-        ubicacion: form.ubicacion,
-        prop: form.prop,
-        profundimetro: { ...form.profundimetro },
-        photos: [...form.photos],
-        precio:
-          typeof form.precio === 'number' ? form.precio : parseInt(form.precio) || 0,
-      },
-      ...ts,
-    ]);
-    setLastSavedCode(form.code);
-    setLastSavedMode('add');
-    setStack(['consultar', 'llanta-resumen']);
   };
 
-  const handleUpdateTire = (code, updates) => {
-    setTires((ts) => ts.map((t) => (t.code === code ? { ...t, ...updates } : t)));
-    flash('Cambios guardados');
+  // ─── Ficha: edición inline (cambios sueltos) ─────────────────────────
+  const handleUpdateTire = async (code, updates) => {
+    try {
+      // updates puede contener {photos, profundimetro, ...} en shape app — convertir a backend
+      const patch = {};
+      if (updates.ref !== undefined)        patch.ref = updates.ref;
+      if (updates.brand !== undefined)      patch.brand = updates.brand;
+      if (updates.pattern !== undefined)    patch.pattern = updates.pattern;
+      if (updates.dot !== undefined)        patch.dot = updates.dot;
+      if (updates.qty !== undefined)        patch.qty = updates.qty;
+      if (updates.type !== undefined)       patch.type = updates.type;
+      if (updates.estado !== undefined)     patch.estado = updates.estado;
+      if (updates.condicion !== undefined)  patch.condicion = updates.condicion;
+      if (updates.ubicacion !== undefined)  patch.ubicacion = updates.ubicacion;
+      if (updates.prop !== undefined)       patch.propietario = updates.prop;
+      if (updates.precio !== undefined)     patch.precio = updates.precio;
+      if (updates.profundimetro) {
+        patch.profExt   = updates.profundimetro.ext   ?? '';
+        patch.profCent  = updates.profundimetro.cent  ?? '';
+        patch.profInter = updates.profundimetro.inter ?? '';
+      }
+      if (updates.photos) {
+        patch.foto1 = updates.photos[0] || '';
+        patch.foto2 = updates.photos[1] || '';
+        patch.foto3 = updates.photos[2] || '';
+        patch.foto4 = updates.photos[3] || '';
+      }
+      const updated = await api.inventarioUpdate(code, patch);
+      const mapped = mapBackendTire(updated);
+      setTires((ts) => ts.map((t) => (t.code === code ? mapped : t)));
+      flash('Cambios guardados');
+    } catch (e) {
+      flash(e.message || 'Error al actualizar', 'err');
+    }
   };
 
   const handleEditTire = (code) => {
     setEditingCode(code);
     nav('editar');
   };
-
   const handleCancelEdit = () => {
     setEditingCode(null);
     back();
   };
 
-  const handleSell = (sale) => {
-    const tire = tires.find((t) => t.code === sale.code);
-    setTires((ts) =>
-      ts
-        .map((t) => (t.code !== sale.code ? t : { ...t, qty: Math.max(0, t.qty - sale.qty) }))
-        .filter((t) => t.qty > 0)
-    );
-    setLastSale({ ...sale, tire: tire ? { photos: tire.photos } : null });
-    setSelectedCode(null);
-    setStack(['consultar', 'venta-resumen']);
+  // ─── Vender ──────────────────────────────────────────────────────────
+  const handleSell = async (sale) => {
+    try {
+      setSaving({ message: 'Registrando venta...' });
+      await api.ventasCreate({
+        code: sale.code,
+        qty: sale.qty,
+        precio: sale.precioVenta || sale.precioSugerido || 0,
+        cliente: sale.cliente || '',
+        notas: sale.notas || '',
+      });
+      // Refrescar inventario (qty bajó o llanta soft-deleted si llegó a 0)
+      const fresh = await api.inventarioList();
+      const mappedFresh = (fresh || []).map(mapBackendTire);
+      setTires(mappedFresh);
+      // tire en el resumen: usar las fotos de la llanta vendida (que puede haber desaparecido)
+      const remaining = mappedFresh.find((t) => t.code === sale.code);
+      const tireForResumen = remaining
+        || tires.find((t) => t.code === sale.code)
+        || null;
+      setLastSale({ ...sale, tire: tireForResumen ? { photos: tireForResumen.photos } : null });
+      setSelectedCode(null);
+      setSaving(null);
+      setStack(['consultar', 'venta-resumen']);
+    } catch (e) {
+      setSaving(null);
+      flash(e.message || 'Error al registrar la venta', 'err');
+    }
   };
 
   const handleVenderOtro = () => {
     setLastSale(null);
     setStack(['consultar', 'vender']);
   };
-
   const handleVolverInicio = () => {
     setLastSale(null);
     setStack(['panel']);
+  };
+
+  // ─── Usuarios admin: diff y replicar al backend ──────────────────────
+  const handleUsersChange = async (newUsers) => {
+    const ops = [];
+    for (const nu of newUsers) {
+      const old = users.find((u) => u.id === nu.id);
+      if (!old) {
+        ops.push({ type: 'create', user: nu });
+      } else {
+        const diff = {};
+        if (nu.name !== old.name) diff.nombre = nu.name;
+        if (nu.role !== old.role) diff.rol = nu.role;
+        if (nu.status !== old.status) diff.estado = nu.status;
+        if (nu.pass) diff.pass = nu.pass;
+        if (Object.keys(diff).length) ops.push({ type: 'update', id: nu.id, diff });
+      }
+    }
+    for (const ou of users) {
+      if (!newUsers.find((u) => u.id === ou.id)) ops.push({ type: 'delete', id: ou.id });
+    }
+    if (ops.length === 0) return;
+    try {
+      setSaving({ message: 'Guardando usuarios...' });
+      for (const op of ops) {
+        if (op.type === 'create') {
+          await api.usuariosCreate({
+            usuario: op.user.user, pass: op.user.pass, nombre: op.user.name,
+            rol: op.user.role, estado: op.user.status,
+          });
+        } else if (op.type === 'update') {
+          await api.usuariosUpdate(op.id, op.diff);
+        } else {
+          await api.usuariosDelete(op.id);
+        }
+      }
+      const fresh = await api.usuariosList();
+      setUsers((fresh || []).map(mapBackendUser));
+      setSaving(null);
+      flash('Usuarios actualizados');
+    } catch (e) {
+      setSaving(null);
+      flash(e.message || 'Error al guardar usuarios', 'err');
+    }
+  };
+
+  // ─── Catálogos admin: diff y replicar ────────────────────────────────
+  const handleCatalogsChange = async (newCatalogs) => {
+    const ops = [];
+    for (const nc of newCatalogs) {
+      const old = catalogs.find((c) => c.id === nc.id);
+      if (!old) {
+        ops.push({ type: 'create', cat: nc });
+      } else {
+        const diff = {};
+        if (nc.name !== old.name)         diff.nombre = nc.name;
+        if (nc.sub !== old.sub)           diff.sub = nc.sub;
+        if (nc.items !== old.items)       diff.items = nc.items;
+        if (nc.updated !== old.updated)   diff.updated = nc.updated;
+        if (JSON.stringify(nc.tags || []) !== JSON.stringify(old.tags || [])) diff.tags = nc.tags;
+        if (Object.keys(diff).length) ops.push({ type: 'update', id: nc.id, diff });
+      }
+    }
+    for (const oc of catalogs) {
+      if (!newCatalogs.find((c) => c.id === oc.id)) ops.push({ type: 'delete', id: oc.id });
+    }
+    if (ops.length === 0) return;
+    try {
+      setSaving({ message: 'Guardando catálogos...' });
+      for (const op of ops) {
+        if (op.type === 'create') {
+          await api.catalogosCreate({
+            nombre: op.cat.name, sub: op.cat.sub,
+            items: op.cat.items, updated: op.cat.updated, tags: op.cat.tags,
+          });
+        } else if (op.type === 'update') {
+          await api.catalogosUpdate(op.id, op.diff);
+        } else {
+          await api.catalogosDelete(op.id);
+        }
+      }
+      const fresh = await api.catalogosList();
+      setCatalogs((fresh || []).map(mapBackendCatalog));
+      setSaving(null);
+      flash('Catálogos actualizados');
+    } catch (e) {
+      setSaving(null);
+      flash(e.message || 'Error al guardar catálogos', 'err');
+    }
+  };
+
+  // ─── Listas admin: diff por hoja ─────────────────────────────────────
+  const handleListasChange = async (newListas) => {
+    const changed = [];
+    for (const key of Object.keys(newListas)) {
+      const oldArr = listas[key] || [];
+      const newArr = newListas[key] || [];
+      if (JSON.stringify(oldArr) !== JSON.stringify(newArr)) {
+        changed.push({ hoja: key, items: newArr });
+      }
+    }
+    if (changed.length === 0) return;
+    try {
+      setSaving({ message: 'Guardando listas...' });
+      for (const c of changed) await api.listasUpdate(c.hoja, c.items);
+      setListas(newListas);
+      setSaving(null);
+      flash('Listas actualizadas');
+    } catch (e) {
+      setSaving(null);
+      flash(e.message || 'Error al guardar listas', 'err');
+    }
   };
 
   const bottomId = useMemo(() => {
@@ -286,38 +446,11 @@ const App = () => {
       />
     );
   } else if (current === 'usuarios') {
-    content = (
-      <UsuariosScreen
-        users={users}
-        onChange={(u) => {
-          setUsers(u);
-          flash('Usuarios actualizados');
-        }}
-        onClose={back}
-      />
-    );
+    content = <UsuariosScreen users={users} onChange={handleUsersChange} onClose={back} />;
   } else if (current === 'catalogos') {
-    content = (
-      <CatalogosScreen
-        catalogs={catalogs}
-        onChange={(c) => {
-          setCatalogs(c);
-          flash('Catálogo actualizado');
-        }}
-        onClose={back}
-      />
-    );
+    content = <CatalogosScreen catalogs={catalogs} onChange={handleCatalogsChange} onClose={back} />;
   } else if (current === 'listas') {
-    content = (
-      <ListasScreen
-        listas={listas}
-        onChange={(l) => {
-          setListas(l);
-          flash('Listas actualizadas');
-        }}
-        onClose={back}
-      />
-    );
+    content = <ListasScreen listas={listas} onChange={handleListasChange} onClose={back} />;
   }
 
   if (bootstrapping) {
@@ -362,6 +495,16 @@ const App = () => {
           onLogout={logout}
           onNav={(s) => nav(s, { reset: true })}
         />
+      )}
+
+      {/* Overlay de "guardando" para operaciones async */}
+      {saving && (
+        <div className="absolute inset-0 z-50 bg-black/40 flex items-center justify-center">
+          <div className="bg-surface-white rounded-2xl shadow-card px-6 py-5 flex flex-col items-center gap-3 max-w-[280px]">
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <div className="text-[14px] font-semibold text-primary text-center">{saving.message}</div>
+          </div>
+        </div>
       )}
     </div>
   );

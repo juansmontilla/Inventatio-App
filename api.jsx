@@ -48,7 +48,6 @@ const api = {
   _url: null,
   _loaded: false,
 
-  // Llamar UNA vez al arrancar la app. Hidrata _token y _url desde el storage persistente.
   async load() {
     if (this._loaded) return;
     this._token = await prefGet(TOKEN_KEY);
@@ -56,25 +55,14 @@ const api = {
     this._loaded = true;
   },
 
-  url() {
-    return this._url || DEFAULT_API_URL;
-  },
-
-  setUrl(u) {
-    this._url = u;
-    prefSet(URL_KEY, u);
-  },
-
-  token() {
-    return this._token;
-  },
-
+  url() { return this._url || DEFAULT_API_URL; },
+  setUrl(u) { this._url = u; prefSet(URL_KEY, u); },
+  token() { return this._token; },
   async setToken(t) {
     this._token = t || null;
     await prefSet(TOKEN_KEY, t || null);
   },
 
-  // Llamada genérica al backend. Usa POST con text/plain para evitar preflight CORS.
   async call(action, args) {
     const body = JSON.stringify({ action, token: this.token(), args: args || {} });
     let res;
@@ -112,7 +100,7 @@ const api = {
     return data;
   },
   async logout() {
-    try { await this.call('auth.logout'); } catch (e) { /* ignore */ }
+    try { await this.call('auth.logout'); } catch (e) {}
     await this.setToken(null);
   },
   async session() {
@@ -142,6 +130,12 @@ const api = {
   listasGet:    function ()            { return this.call('listas.get'); },
   listasUpdate: function (hoja, items) { return this.call('listas.update', { hoja, items }); },
 
+  // ─── Catálogos ───────────────────────────────────────────
+  catalogosList:   function ()         { return this.call('catalogos.list'); },
+  catalogosCreate: function (data)     { return this.call('catalogos.create', data); },
+  catalogosUpdate: function (id, data) { return this.call('catalogos.update', Object.assign({ id }, data)); },
+  catalogosDelete: function (id)       { return this.call('catalogos.delete', { id }); },
+
   // ─── Fotos ───────────────────────────────────────────────
   fotosUpload: function (base64, filename) {
     return this.call('fotos.upload', { base64, filename });
@@ -151,14 +145,125 @@ const api = {
   syncChanges: function (since) { return this.call('sync.changes', { since }); },
 };
 
-// Mapea el shape del backend → shape que usan los componentes existentes
+// ─── Mappers backend <-> app ─────────────────────────────────
+
 const mapBackendUser = (u) => ({
   id: u.id,
   user: u.usuario,
   name: u.nombre,
   role: u.rol,
-  status: 'Activo',
+  status: u.estado || 'Activo',
 });
 
+// Backend tire (columnas planas) → shape interno que usan las screens
+const mapBackendTire = (t) => ({
+  code: t.code,
+  ref: t.ref || '',
+  brand: t.brand || '',
+  pattern: t.pattern || '—',
+  dot: t.dot != null ? String(t.dot).padStart(4, '0').slice(-4) : '',
+  qty: parseInt(t.qty) || 0,
+  type: t.type || '',
+  estado: t.estado || '',
+  condicion: t.condicion || '',
+  ubicacion: t.ubicacion || '',
+  prop: t.propietario || '',
+  precio: parseInt(t.precio) || 0,
+  profundimetro: {
+    ext:   t.profExt   !== '' && t.profExt   != null ? parseFloat(t.profExt)   : '',
+    cent:  t.profCent  !== '' && t.profCent  != null ? parseFloat(t.profCent)  : '',
+    inter: t.profInter !== '' && t.profInter != null ? parseFloat(t.profInter) : '',
+  },
+  photos: [t.foto1 || null, t.foto2 || null, t.foto3 || null, t.foto4 || null],
+});
+
+// Form de AgregarScreen → payload para backend
+const mapFormToBackendTire = (form, fotoUrls) => ({
+  code: form.code,
+  ref: form.ref || '',
+  brand: form.brand || '',
+  pattern: form.pattern || '',
+  dot: form.dot || '',
+  qty: parseInt(form.qty) || 1,
+  type: form.type || '',
+  estado: form.estado || '',
+  condicion: form.condicion || '',
+  ubicacion: form.ubicacion || '',
+  propietario: form.prop || '',
+  precio: typeof form.precio === 'number' ? form.precio : (parseInt(form.precio) || 0),
+  profExt:   form.profundimetro?.ext   ?? '',
+  profCent:  form.profundimetro?.cent  ?? '',
+  profInter: form.profundimetro?.inter ?? '',
+  foto1: fotoUrls[0] || '',
+  foto2: fotoUrls[1] || '',
+  foto3: fotoUrls[2] || '',
+  foto4: fotoUrls[3] || '',
+});
+
+// Backend catalogo → shape interno
+const mapBackendCatalog = (c) => ({
+  id: c.id,
+  name: c.nombre,
+  sub: c.sub || '',
+  items: parseInt(c.items) || 0,
+  updated: c.updated || '',
+  tags: c.tags ? String(c.tags).split(',').map(s => s.trim()).filter(Boolean) : [],
+});
+
+// ─── Compresión de imágenes (browser canvas) ─────────────────
+
+// dataUrl JPEG/PNG → dataUrl JPEG comprimido (maxSize px en la dim mayor, calidad 0-1)
+function compressImage(dataUrl, maxSize, quality) {
+  return new Promise((resolve, reject) => {
+    if (!dataUrl) return resolve(null);
+    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
+      // No es dataURL — devolverla tal cual (ya es URL HTTP)
+      return resolve(dataUrl);
+    }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        const M = maxSize || 1024;
+        if (width > M || height > M) {
+          if (width >= height) { height = Math.round(height * M / width); width = M; }
+          else                  { width  = Math.round(width  * M / height); height = M; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality || 0.75));
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => reject(new Error('Imagen inválida'));
+    img.src = dataUrl;
+  });
+}
+
+// Sube las fotos del form a imgbb (vía Apps Script). Mantiene URLs ya existentes.
+// Devuelve array de 4 strings (url o '').
+async function uploadFormPhotos(form, codeForName, onProgress) {
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const p = form.photos && form.photos[i];
+    if (!p) { out.push(''); continue; }
+    if (typeof p === 'string' && /^https?:\/\//.test(p)) {
+      // Ya está subida
+      out.push(p);
+      continue;
+    }
+    if (onProgress) onProgress(i + 1, 4);
+    const compressed = await compressImage(p, 1024, 0.75);
+    const filename = 'llanta_' + codeForName + '_' + (i + 1) + '.jpg';
+    const result = await api.fotosUpload(compressed, filename);
+    out.push(result.url);
+  }
+  return out;
+}
+
 // Expone como globals para que los .jsx hermanos las usen sin imports
-Object.assign(window, { api, mapBackendUser });
+Object.assign(window, {
+  api, mapBackendUser, mapBackendTire, mapFormToBackendTire, mapBackendCatalog,
+  compressImage, uploadFormPhotos,
+});

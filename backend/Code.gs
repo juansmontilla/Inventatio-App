@@ -25,6 +25,7 @@ const SHEETS = {
   INVENTARIO: 'Inventario',
   VENTAS: 'Ventas',
   LISTAS: 'Listas',
+  CATALOGOS: 'Catalogos',
   SESIONES: 'Sesiones',
   MOVIMIENTOS: 'Movimientos',
 };
@@ -38,6 +39,7 @@ const HEADERS = {
                 'createdAt', 'createdBy', 'updatedAt', 'updatedBy', 'deletedAt'],
   Ventas:      ['id', 'code', 'qty', 'precio', 'cliente', 'vendedor', 'fecha', 'notas', 'createdAt', 'createdBy'],
   Listas:      ['hoja', 'clave', 'valor', 'orden', 'activo'],
+  Catalogos:   ['id', 'nombre', 'sub', 'items', 'updated', 'tags', 'activo', 'createdAt', 'updatedAt'],
   Sesiones:    ['token', 'userId', 'createdAt', 'expiresAt', 'userAgent'],
   Movimientos: ['timestamp', 'userId', 'accion', 'entidad', 'entidadId', 'detalles'],
 };
@@ -51,6 +53,7 @@ const WRITE_ACTIONS  = [
   'ventas.create',
   'usuarios.create', 'usuarios.update', 'usuarios.delete',
   'listas.update',
+  'catalogos.create', 'catalogos.update', 'catalogos.delete',
 ];
 
 // ─── Entry points ─────────────────────────────────────────────────────
@@ -120,6 +123,11 @@ function route(action, token, args) {
 
     case 'listas.get':        return listasGet();
     case 'listas.update':     return listasUpdate(args.hoja, args.items, session);
+
+    case 'catalogos.list':    return catalogosList();
+    case 'catalogos.create':  return catalogosCreate(args, session);
+    case 'catalogos.update':  return catalogosUpdate(args.id, args, session);
+    case 'catalogos.delete':  return catalogosDelete(args.id, session);
 
     case 'fotos.upload':      return fotosUpload(args.base64, args.filename);
 
@@ -195,6 +203,25 @@ function setup() {
         });
       });
     }
+  }
+
+  // Seed Catalogos si vacío
+  if (readAll(SHEETS.CATALOGOS).length === 0) {
+    const catalogosDefault = [
+      { nombre: 'Llantas OTR - Minería',   sub: 'Off-the-road, alto desgaste', items: 0, updated: 'hoy',         tags: 'Crítico,Ventas' },
+      { nombre: 'Repuestos de Suspensión', sub: 'Amortiguadores, terminales',   items: 0, updated: 'Verificado',  tags: 'Stock bajo' },
+      { nombre: 'Llantas Pasajero PCR',    sub: 'Passenger Car Radial',         items: 0, updated: 'ayer',        tags: 'Ventas' },
+      { nombre: 'Llantas Camión TBR',      sub: 'Truck Bus Radial',             items: 0, updated: 'esta semana', tags: '' },
+    ];
+    catalogosDefault.forEach((c, idx) => {
+      appendRow(SHEETS.CATALOGOS, {
+        id: 'c' + (Date.now() + idx),
+        nombre: c.nombre, sub: c.sub,
+        items: c.items, updated: c.updated, tags: c.tags,
+        activo: true,
+        createdAt: now(), updatedAt: now(),
+      });
+    });
   }
 
   // Validar IMGBB_API_KEY (warning solo)
@@ -432,6 +459,52 @@ function listasUpdate(hoja, items, session) {
   });
   logMovement(session.userId, 'update', 'lista', hoja, JSON.stringify(items));
   return { ok: true, count: items.length };
+}
+
+// ─── Catálogos ────────────────────────────────────────────────────────
+
+function catalogosList() {
+  return readAll(SHEETS.CATALOGOS).filter(r => r.activo === true || r.activo === 'true' || r.activo === 'TRUE');
+}
+
+function catalogosCreate(data, session) {
+  if (session.user.rol !== 'admin') throw new Error('Solo admin');
+  if (!data.nombre) throw new Error('nombre requerido');
+  const id = 'c' + Date.now();
+  appendRow(SHEETS.CATALOGOS, {
+    id, nombre: data.nombre, sub: data.sub || '',
+    items: parseInt(data.items) || 0,
+    updated: data.updated || 'hoy',
+    tags: Array.isArray(data.tags) ? data.tags.join(',') : (data.tags || ''),
+    activo: true,
+    createdAt: now(), updatedAt: now(),
+  });
+  logMovement(session.userId, 'create', 'catalogo', id, JSON.stringify({ nombre: data.nombre }));
+  return { id };
+}
+
+function catalogosUpdate(id, data, session) {
+  if (session.user.rol !== 'admin') throw new Error('Solo admin');
+  const row = readAll(SHEETS.CATALOGOS).find(r => r.id === id);
+  if (!row) throw new Error('Catálogo no encontrado');
+  const patch = { updatedAt: now() };
+  if (data.nombre !== undefined)  patch.nombre = data.nombre;
+  if (data.sub !== undefined)     patch.sub = data.sub;
+  if (data.items !== undefined)   patch.items = parseInt(data.items) || 0;
+  if (data.updated !== undefined) patch.updated = data.updated;
+  if (data.tags !== undefined)    patch.tags = Array.isArray(data.tags) ? data.tags.join(',') : (data.tags || '');
+  updateRow(SHEETS.CATALOGOS, row._row, patch);
+  logMovement(session.userId, 'update', 'catalogo', id, JSON.stringify(Object.keys(patch)));
+  return { ok: true };
+}
+
+function catalogosDelete(id, session) {
+  if (session.user.rol !== 'admin') throw new Error('Solo admin');
+  const row = readAll(SHEETS.CATALOGOS).find(r => r.id === id);
+  if (!row) throw new Error('Catálogo no encontrado');
+  updateRow(SHEETS.CATALOGOS, row._row, { activo: false, updatedAt: now() });
+  logMovement(session.userId, 'delete', 'catalogo', id, '');
+  return { ok: true };
 }
 
 // ─── Fotos (imgbb) ────────────────────────────────────────────────────
