@@ -3,6 +3,7 @@
 
 const App = () => {
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [bootDiag, setBootDiag] = useState({ step: 'iniciando', detail: '' });
   const [user, setUser] = useState(null);
   const [tires, setTires] = useState(TIRES);
   const [users, setUsers] = useState(USERS);
@@ -14,17 +15,32 @@ const App = () => {
   // Auto-login si hay token guardado y todavía es válido
   useEffect(() => {
     (async () => {
+      const diag = (step, detail) => setBootDiag({ step, detail: detail || '' });
       try {
-        await api.load(); // hidrata token desde Preferences (nativo) o localStorage
-        if (api.token()) {
-          const sess = await api.session();
-          if (sess && sess.user) {
-            setUser(mapBackendUser(sess.user));
-            setStack(['panel']);
-          }
+        diag('cargando token');
+        await api.load();
+        const tok = api.token();
+        const plugin = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences);
+        diag('token check', `plugin=${plugin ? 'sí' : 'no'} · token=${tok ? 'sí (' + tok.slice(0,8) + '...)' : 'no'}`);
+        if (!tok) {
+          // No hay sesión guardada — al login sin esperar
+          return;
         }
-      } catch (e) { /* ignore — vamos al login */ }
-      finally { setBootstrapping(false); }
+        diag('validando sesión', '');
+        const sess = await api.session();
+        if (sess && sess.user) {
+          setUser(mapBackendUser(sess.user));
+          setStack(['panel']);
+          diag('ok', '');
+          return;
+        }
+        diag('sesión inválida', 'el backend rechazó el token');
+      } catch (e) {
+        diag('error', String(e && e.message || e));
+      } finally {
+        // Pequeño delay si hubo error/diagnóstico, para que el usuario lo vea
+        setTimeout(() => setBootstrapping(false), 600);
+      }
     })();
   }, []);
   const [selectedCode, setSelectedCode] = useState(null);
@@ -306,12 +322,16 @@ const App = () => {
 
   if (bootstrapping) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-bg">
-        <div className="text-center">
+      <div className="w-screen h-screen flex items-center justify-center bg-bg px-6">
+        <div className="text-center max-w-sm">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-2 shadow-card flex items-center justify-center mx-auto">
             <TireGlyph size={50} />
           </div>
-          <div className="mt-4 text-ink-soft text-sm">Cargando...</div>
+          <div className="mt-4 text-ink text-sm font-medium">Cargando...</div>
+          <div className="mt-1 text-ink-soft text-[12px]">Paso: {bootDiag.step}</div>
+          {bootDiag.detail && (
+            <div className="mt-1 text-outline text-[11px] break-all leading-snug">{bootDiag.detail}</div>
+          )}
         </div>
       </div>
     );

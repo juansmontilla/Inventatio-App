@@ -69,9 +69,9 @@ const api = {
     return this._token;
   },
 
-  setToken(t) {
+  async setToken(t) {
     this._token = t || null;
-    prefSet(TOKEN_KEY, t || null);
+    await prefSet(TOKEN_KEY, t || null);
   },
 
   // Llamada genérica al backend. Usa POST con text/plain para evitar preflight CORS.
@@ -108,12 +108,12 @@ const api = {
   async login(usuario, pass) {
     const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '').slice(0, 200);
     const data = await this.call('auth.login', { usuario, pass, userAgent: ua });
-    this.setToken(data.token);
+    await this.setToken(data.token);
     return data;
   },
   async logout() {
     try { await this.call('auth.logout'); } catch (e) { /* ignore */ }
-    this.setToken(null);
+    await this.setToken(null);
   },
   async session() {
     if (!this.token()) return null;
