@@ -33,7 +33,7 @@ jobs:
 
       - name: Install npm dependencies
         working-directory: mobile
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
       - name: Sync web sources -> mobile/www
         working-directory: mobile
