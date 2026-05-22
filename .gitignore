@@ -5,6 +5,7 @@ node_modules/
 mobile/android/
 mobile/ios/
 mobile/preview.html
+mobile/www/api.jsx
 mobile/www/data.jsx
 mobile/www/ui.jsx
 mobile/www/etiqueta.jsx

@@ -3,16 +3,24 @@
 // ─── Login ───
 const LoginScreen = ({ onLogin }) => {
   const [user, setUser] = useState('admin');
-  const [pass, setPass] = useState('1234');
+  const [pass, setPass] = useState('admin');
   const [show, setShow] = useState(false);
   const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e?.preventDefault?.();
-    const found = USERS.find(u => u.user.toLowerCase() === user.trim().toLowerCase() && u.pass === pass);
-    if (!found) { setErr('Usuario o contraseña incorrectos.'); return; }
-    if (found.status !== 'Activo') { setErr('Usuario inactivo. Contacte administrador.'); return; }
-    onLogin(found);
+    if (loading) return;
+    setErr('');
+    setLoading(true);
+    try {
+      const data = await api.login(user.trim(), pass);
+      onLogin(mapBackendUser(data.user));
+    } catch (ex) {
+      setErr(ex.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +62,9 @@ const LoginScreen = ({ onLogin }) => {
 
           {err && <div className="bg-err-soft text-err text-[13px] px-3 py-2 rounded-lg font-medium">{err}</div>}
 
-          <PrimaryButton type="submit" className="w-full">Ingresar</PrimaryButton>
+          <PrimaryButton type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Verificando...' : 'Ingresar'}
+          </PrimaryButton>
 
           <div className="text-center text-[13px] text-ink-soft pt-2">
             ¿No tiene una cuenta? <span className="font-semibold text-primary">Solicite acceso</span>
@@ -67,17 +77,13 @@ const LoginScreen = ({ onLogin }) => {
           <div className="flex-1 h-px bg-outline-soft/60" />
         </div>
 
-        {/* Demo helper */}
+        {/* Demo helper — solo admin existe en el backend hasta que crees más usuarios */}
         <div className="mt-2 rounded-lg bg-surface-mid/70 p-3 text-[11.5px] text-ink-soft leading-relaxed">
-          <div className="font-semibold text-ink mb-1">Demo · usuarios de prueba</div>
-          <div className="grid grid-cols-3 gap-1.5">
-            {[['admin','admin'],['recepcion','recepcion'],['consultor','consultor']].map(([u,r]) => (
-              <button key={u} type="button" onClick={() => { setUser(u); setPass('1234'); }} className="bg-surface-white border border-outline-soft/60 rounded-md px-2 py-1.5 hover:border-primary text-left">
-                <div className="font-semibold text-ink capitalize">{r}</div>
-                <div className="text-outline text-[10px]">pwd: 1234</div>
-              </button>
-            ))}
-          </div>
+          <div className="font-semibold text-ink mb-1">Usuario inicial</div>
+          <button type="button" onClick={() => { setUser('admin'); setPass('admin'); }} className="w-full bg-surface-white border border-outline-soft/60 rounded-md px-3 py-2 hover:border-primary text-left">
+            <div className="font-semibold text-ink">admin</div>
+            <div className="text-outline text-[10px]">pwd: admin · cambiala apenas entres</div>
+          </button>
         </div>
       </div>
 

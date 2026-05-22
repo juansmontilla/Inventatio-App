@@ -2,6 +2,7 @@
 // Renderiza a pantalla completa para empaquetar con Capacitor.
 
 const App = () => {
+  const [bootstrapping, setBootstrapping] = useState(true);
   const [user, setUser] = useState(null);
   const [tires, setTires] = useState(TIRES);
   const [users, setUsers] = useState(USERS);
@@ -9,6 +10,22 @@ const App = () => {
   const [listas, setListas] = useState(LISTAS_DEFAULT);
 
   const [stack, setStack] = useState(['login']);
+
+  // Auto-login si hay token guardado y todavía es válido
+  useEffect(() => {
+    (async () => {
+      try {
+        if (api.token()) {
+          const sess = await api.session();
+          if (sess && sess.user) {
+            setUser(mapBackendUser(sess.user));
+            setStack(['panel']);
+          }
+        }
+      } catch (e) { /* ignore — vamos al login */ }
+      finally { setBootstrapping(false); }
+    })();
+  }, []);
   const [selectedCode, setSelectedCode] = useState(null);
   const [editingCode, setEditingCode] = useState(null);
   const [lastSale, setLastSale] = useState(null);
@@ -38,6 +55,7 @@ const App = () => {
     flash('Bienvenido, ' + u.name.split(' ')[0]);
   };
   const logout = () => {
+    api.logout(); // fire-and-forget; limpia el token local de inmediato
     setUser(null);
     setStack(['login']);
     setSelectedCode(null);
@@ -282,6 +300,19 @@ const App = () => {
         }}
         onClose={back}
       />
+    );
+  }
+
+  if (bootstrapping) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-bg">
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary-2 shadow-card flex items-center justify-center mx-auto">
+            <TireGlyph size={50} />
+          </div>
+          <div className="mt-4 text-ink-soft text-sm">Cargando...</div>
+        </div>
+      </div>
     );
   }
 

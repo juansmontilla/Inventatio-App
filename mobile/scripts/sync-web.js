@@ -4,6 +4,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const DEST = path.resolve(__dirname, '..', 'www');
 const SHARED_FILES = [
+  'api.jsx',
   'data.jsx', 'ui.jsx', 'etiqueta.jsx',
   'screens-main.jsx', 'screens-flows.jsx', 'screens-admin.jsx',
 ];

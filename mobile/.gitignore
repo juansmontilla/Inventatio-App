@@ -3,6 +3,7 @@ android/
 ios/
 .DS_Store
 *.log
+www/api.jsx
 www/data.jsx
 www/ui.jsx
 www/etiqueta.jsx
