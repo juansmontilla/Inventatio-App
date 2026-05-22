@@ -11,6 +11,7 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [catalogs, setCatalogs] = useState([]);
   const [listas, setListas] = useState(LISTAS_DEFAULT);
+  const [loadErrors, setLoadErrors] = useState([]); // errores parciales de refresh
 
   const [stack, setStack] = useState(['login']);
   const [selectedCode, setSelectedCode] = useState(null);
@@ -22,6 +23,9 @@ const App = () => {
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(null); // {message: string} | null
 
+  // Flag para evitar doble-refresh: el bootstrap ya cargó datos del backend
+  const bootstrapDidLoad = useRef(false);
+
   const current = stack[stack.length - 1];
 
   const flash = (msg, kind = 'ok') => {
@@ -29,7 +33,46 @@ const App = () => {
     setTimeout(() => setToast(null), 2400);
   };
 
-  // ─── Bootstrap: hidratar token y auto-login ──────────────────────────
+  // ─── doRefresh: pide todos los datos del backend con Promise.allSettled ───
+  // Devuelve {errors: [string]}. Aplica los datos que sí llegaron, registra cuáles fallaron.
+  const doRefresh = async (currentUser) => {
+    const u = currentUser || user;
+    if (!u) return { errors: [] };
+    const calls = [
+      ['Inventario', api.inventarioList()],
+      ['Listas',     api.listasGet()],
+      ['Catálogos',  api.catalogosList()],
+    ];
+    if (u.role === 'admin') calls.push(['Usuarios', api.usuariosList()]);
+
+    const results = await Promise.allSettled(calls.map(c => c[1]));
+    const errors = [];
+    results.forEach((r, idx) => {
+      const [name] = calls[idx];
+      if (r.status === 'rejected') {
+        errors.push(name + ': ' + (r.reason && r.reason.message || 'error'));
+        return;
+      }
+      const val = r.value;
+      if (name === 'Inventario')      setTires((val || []).map(mapBackendTire));
+      else if (name === 'Listas')     setListas(Object.assign({}, LISTAS_DEFAULT, val || {}));
+      else if (name === 'Catálogos')  setCatalogs((val || []).map(mapBackendCatalog));
+      else if (name === 'Usuarios')   setUsers((val || []).map(mapBackendUser));
+    });
+    setLoadErrors(errors);
+    return { errors };
+  };
+
+  const retryRefresh = async () => {
+    if (!user) return;
+    setSaving({ message: 'Reintentando...' });
+    const r = await doRefresh(user);
+    setSaving(null);
+    if (r.errors.length === 0) flash('Datos actualizados');
+    else flash('Aún hay errores: ' + r.errors[0], 'err');
+  };
+
+  // ─── Bootstrap: hidrata token, valida sesión Y carga datos antes de mostrar UI ───
   useEffect(() => {
     (async () => {
       const diag = (step, detail) => setBootDiag({ step, detail: detail || '' });
@@ -42,46 +85,43 @@ const App = () => {
         if (!tok) return;
         diag('validando sesión', '');
         const sess = await api.session();
-        if (sess && sess.user) {
-          setUser(mapBackendUser(sess.user));
-          setStack(['panel']);
-          diag('ok', '');
+        if (!sess || !sess.user) {
+          diag('sesión inválida', 'el backend rechazó el token');
           return;
         }
-        diag('sesión inválida', 'el backend rechazó el token');
+        const mappedUser = mapBackendUser(sess.user);
+        diag('cargando inventario y listas...', '');
+        const refreshResult = await doRefresh(mappedUser);
+        bootstrapDidLoad.current = true;
+        setUser(mappedUser);
+        setStack(['panel']);
+        if (refreshResult.errors.length === 0) {
+          diag('ok', '');
+        } else {
+          diag('cargado con errores', refreshResult.errors.join(' · '));
+        }
       } catch (e) {
         diag('error', String(e && e.message || e));
       } finally {
-        setTimeout(() => setBootstrapping(false), 400);
+        setTimeout(() => setBootstrapping(false), 500);
       }
     })();
   }, []);
 
-  // ─── Refrescar todos los datos del backend ───────────────────────────
-  const refreshAll = async (currentUser) => {
-    const u = currentUser || user;
-    if (!u) return;
-    try {
-      const [inv, lst, cat] = await Promise.all([
-        api.inventarioList(),
-        api.listasGet(),
-        api.catalogosList(),
-      ]);
-      setTires((inv || []).map(mapBackendTire));
-      setListas(Object.assign({}, LISTAS_DEFAULT, lst || {}));
-      setCatalogs((cat || []).map(mapBackendCatalog));
-      if (u.role === 'admin') {
-        const us = await api.usuariosList();
-        setUsers((us || []).map(mapBackendUser));
-      }
-    } catch (e) {
-      flash(e.message || 'Error cargando datos', 'err');
-    }
-  };
-
-  // Cargar datos cuando user cambia (login o session restore)
+  // ─── [user] effect: cargar datos cuando user cambia por login manual ─────
+  // Si el bootstrap ya cargó, saltamos para no duplicar la llamada.
   useEffect(() => {
-    if (user) refreshAll(user);
+    if (!user) return;
+    if (bootstrapDidLoad.current) {
+      bootstrapDidLoad.current = false;
+      return;
+    }
+    (async () => {
+      setSaving({ message: 'Cargando datos...' });
+      const r = await doRefresh(user);
+      setSaving(null);
+      if (r.errors.length > 0) flash('Algunos datos no se pudieron cargar', 'err');
+    })();
   }, [user]);
 
   const nav = (screen, opts = {}) => {
@@ -107,6 +147,7 @@ const App = () => {
     setLastSavedCode(null);
     setDrawerOpen(false);
     setTires([]); setUsers([]); setCatalogs([]);
+    setLoadErrors([]);
   };
 
   const onBottomNav = (id) => {
@@ -152,7 +193,6 @@ const App = () => {
   // ─── Ficha: edición inline (cambios sueltos) ─────────────────────────
   const handleUpdateTire = async (code, updates) => {
     try {
-      // updates puede contener {photos, profundimetro, ...} en shape app — convertir a backend
       const patch = {};
       if (updates.ref !== undefined)        patch.ref = updates.ref;
       if (updates.brand !== undefined)      patch.brand = updates.brand;
@@ -205,11 +245,9 @@ const App = () => {
         cliente: sale.cliente || '',
         notas: sale.notas || '',
       });
-      // Refrescar inventario (qty bajó o llanta soft-deleted si llegó a 0)
       const fresh = await api.inventarioList();
       const mappedFresh = (fresh || []).map(mapBackendTire);
       setTires(mappedFresh);
-      // tire en el resumen: usar las fotos de la llanta vendida (que puede haber desaparecido)
       const remaining = mappedFresh.find((t) => t.code === sale.code);
       const tireForResumen = remaining
         || tires.find((t) => t.code === sale.code)
@@ -480,6 +518,24 @@ const App = () => {
           onAccount={() => flash(user.name + ' · ' + ROLES[user.role].label)}
         />
       )}
+
+      {/* Banner persistente si hubo errores al cargar datos */}
+      {showChrome && loadErrors.length > 0 && (
+        <div className="bg-err-soft border-b border-err/30 px-4 py-2.5 flex items-start gap-2.5">
+          <Icon name="warning" className="text-err shrink-0 mt-0.5" style={{ fontSize: 18 }} />
+          <div className="flex-1 min-w-0">
+            <div className="text-[12.5px] font-bold text-err leading-tight">No se pudo cargar todo</div>
+            <div className="text-[11px] text-err/85 mt-0.5 leading-snug">{loadErrors.join(' · ')}</div>
+          </div>
+          <button
+            onClick={retryRefresh}
+            className="shrink-0 bg-err text-white text-[12px] font-semibold px-3 py-1.5 rounded-md active:scale-95"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       <div className={'flex-1 overflow-y-auto phone-scroll ' + (showChrome && bottomId ? 'pb-20' : '')}>
         {content}
       </div>

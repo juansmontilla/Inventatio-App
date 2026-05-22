@@ -431,7 +431,7 @@ function usuariosDelete(id, session) {
 // ─── Listas ───────────────────────────────────────────────────────────
 
 function listasGet() {
-  const rows = readAll(SHEETS.LISTAS).filter(r => r.activo === true || r.activo === 'true' || r.activo === 'TRUE');
+  const rows = readAll(SHEETS.LISTAS).filter(r => isTruthy(r.activo));
   rows.sort((a, b) => (a.orden || 0) - (b.orden || 0));
   const out = {};
   for (const row of rows) {
@@ -445,18 +445,20 @@ function listasUpdate(hoja, items, session) {
   if (session.user.rol !== 'admin') throw new Error('Solo admin');
   if (!hoja || !Array.isArray(items)) throw new Error('hoja y items requeridos');
 
-  // Desactivar todos los items existentes de esa hoja
+  // Borrar duro todas las filas existentes de esa hoja (de abajo hacia arriba)
+  const sheet = getSheet(SHEETS.LISTAS);
   const rows = readAll(SHEETS.LISTAS).filter(r => r.hoja === hoja);
-  for (const r of rows) updateRow(SHEETS.LISTAS, r._row, { activo: false });
+  rows.sort((a, b) => b._row - a._row).forEach(r => sheet.deleteRow(r._row));
 
   // Agregar items nuevos como activos
   items.forEach((valor, idx) => {
     appendRow(SHEETS.LISTAS, {
       hoja,
-      clave: hoja + '_' + Date.now() + '_' + idx,
+      clave: hoja + '_' + (idx + 1),
       valor, orden: idx + 1, activo: true,
     });
   });
+  // El historial de quién/cuándo cambió queda en hoja Movimientos
   logMovement(session.userId, 'update', 'lista', hoja, JSON.stringify(items));
   return { ok: true, count: items.length };
 }
@@ -464,7 +466,7 @@ function listasUpdate(hoja, items, session) {
 // ─── Catálogos ────────────────────────────────────────────────────────
 
 function catalogosList() {
-  return readAll(SHEETS.CATALOGOS).filter(r => r.activo === true || r.activo === 'true' || r.activo === 'TRUE');
+  return readAll(SHEETS.CATALOGOS).filter(r => isTruthy(r.activo));
 }
 
 function catalogosCreate(data, session) {
@@ -561,16 +563,43 @@ function getSheet(name) {
   return s;
 }
 
+// Helpers para celdas foto1-4 con HYPERLINK
+function isFotoColumn(h) { return /^foto[1-4]$/.test(h); }
+
+function wrapFotoFormula(value) {
+  if (typeof value === 'string' && /^https?:\/\//.test(value)) {
+    return '=HYPERLINK("' + value.replace(/"/g, '""') + '", "ver foto")';
+  }
+  return value;
+}
+
+function extractUrlFromFormula(formula) {
+  if (!formula) return null;
+  const m = String(formula).match(/HYPERLINK\("([^"]+)"/i);
+  return m ? m[1] : null;
+}
+
+// Lectura genérica con extracción de URL desde fórmulas HYPERLINK en foto1-4
 function readAll(sheetName) {
   const sheet = getSheet(sheetName);
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
   const lastCol = sheet.getLastColumn();
-  const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  const range = sheet.getRange(1, 1, lastRow, lastCol);
+  const values = range.getValues();
+  const formulas = range.getFormulas();
   const headers = values[0];
   return values.slice(1).map((row, idx) => {
     const obj = { _row: idx + 2 };
-    headers.forEach((h, i) => { if (h) obj[h] = row[i]; });
+    headers.forEach((h, i) => {
+      if (!h) return;
+      if (isFotoColumn(h)) {
+        const f = formulas[idx + 1][i];
+        const url = extractUrlFromFormula(f);
+        if (url) { obj[h] = url; return; }
+      }
+      obj[h] = row[i];
+    });
     return obj;
   });
 }
@@ -578,16 +607,31 @@ function readAll(sheetName) {
 function appendRow(sheetName, obj) {
   const sheet = getSheet(sheetName);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const row = headers.map(h => obj[h] !== undefined && obj[h] !== null ? obj[h] : '');
+  const row = headers.map(h => {
+    let v = obj[h] !== undefined && obj[h] !== null ? obj[h] : '';
+    if (isFotoColumn(h)) v = wrapFotoFormula(v);
+    return v;
+  });
   sheet.appendRow(row);
 }
 
 function updateRow(sheetName, rowNum, patch) {
   const sheet = getSheet(sheetName);
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const current = sheet.getRange(rowNum, 1, 1, headers.length).getValues()[0];
-  const updated = headers.map((h, i) => patch[h] !== undefined ? patch[h] : current[i]);
-  sheet.getRange(rowNum, 1, 1, headers.length).setValues([updated]);
+  const lastCol = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const currentRange = sheet.getRange(rowNum, 1, 1, lastCol);
+  const currentValues = currentRange.getValues()[0];
+  const currentFormulas = currentRange.getFormulas()[0];
+  const updated = headers.map((h, i) => {
+    if (patch[h] !== undefined) {
+      let v = patch[h];
+      if (isFotoColumn(h)) v = wrapFotoFormula(v);
+      return v;
+    }
+    // Conserva la fórmula original si existe (no la pisamos con su valor renderizado)
+    return currentFormulas[i] || currentValues[i];
+  });
+  currentRange.setValues([updated]);
 }
 
 function deleteRow(sheetName, rowNum) {
@@ -611,6 +655,13 @@ function stripPhotos(obj) {
 }
 
 function now() { return new Date().toISOString(); }
+
+// Tolera boolean true, string "true"/"TRUE"/"True", número 1, etc.
+function isTruthy(v) {
+  if (v === true || v === 1) return true;
+  if (typeof v === 'string') return v.toLowerCase().trim() === 'true';
+  return false;
+}
 
 function randomHex(bytes) {
   let s = '';
