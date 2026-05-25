@@ -6,6 +6,7 @@ mobile/android/
 mobile/ios/
 mobile/preview.html
 mobile/www/api.jsx
+mobile/www/printer.jsx
 mobile/www/data.jsx
 mobile/www/ui.jsx
 mobile/www/etiqueta.jsx

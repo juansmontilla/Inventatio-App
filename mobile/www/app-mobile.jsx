@@ -79,6 +79,7 @@ const App = () => {
       try {
         diag('cargando token');
         await api.load();
+        try { await printer.load(); } catch (e) {}
         const tok = api.token();
         const plugin = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences);
         diag('token check', `plugin=${plugin ? 'sí' : 'no'} · token=${tok ? 'sí (' + tok.slice(0,8) + '...)' : 'no'}`);
@@ -387,7 +388,7 @@ const App = () => {
     if (['panel'].includes(current)) return 'panel';
     if (['consultar', 'ficha'].includes(current)) return 'consultar';
     if (['vender', 'venta-resumen'].includes(current)) return 'vender';
-    if (['admin', 'usuarios', 'catalogos', 'listas'].includes(current)) return 'admin';
+    if (['admin', 'usuarios', 'catalogos', 'listas', 'impresora'].includes(current)) return 'admin';
     if (['agregar', 'editar', 'llanta-resumen'].includes(current)) return 'panel';
     return null;
   }, [current]);
@@ -479,10 +480,13 @@ const App = () => {
         onNavUsers={() => nav('usuarios')}
         onNavCatalogos={() => nav('catalogos')}
         onNavListas={() => nav('listas')}
+        onNavImpresora={() => nav('impresora')}
         onExport={() => flash('Exportando CSV...')}
         onAudit={() => flash('Auditoría — sin eventos hoy')}
       />
     );
+  } else if (current === 'impresora') {
+    content = <ImpresoraScreen onClose={back} />;
   } else if (current === 'usuarios') {
     content = <UsuariosScreen users={users} onChange={handleUsersChange} onClose={back} />;
   } else if (current === 'catalogos') {

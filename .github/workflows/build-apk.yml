@@ -47,6 +47,32 @@ jobs:
         working-directory: mobile
         run: npx cap sync android
 
+      - name: Patch AndroidManifest with Bluetooth 12+ permissions
+        working-directory: mobile/android/app/src/main
+        run: |
+          python3 << 'PYEOF'
+          with open('AndroidManifest.xml', 'r', encoding='utf-8') as f:
+              content = f.read()
+          perms = [
+              '<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" tools:targetApi="s" />',
+              '<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />',
+              '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+              '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
+          ]
+          if 'xmlns:tools' not in content:
+              content = content.replace(
+                  '<manifest ',
+                  '<manifest xmlns:tools="http://schemas.android.com/tools" ',
+                  1
+              )
+          for p in perms:
+              if p not in content:
+                  content = content.replace('<application', p + '\n    <application', 1)
+          with open('AndroidManifest.xml', 'w', encoding='utf-8') as f:
+              f.write(content)
+          print('Manifest patched with BT 12+ permissions')
+          PYEOF
+
       - name: Make gradlew executable
         working-directory: mobile/android
         run: chmod +x ./gradlew

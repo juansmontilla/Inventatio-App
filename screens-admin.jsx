@@ -1,6 +1,6 @@
 // Admin screens: Catálogos, Usuarios, AdminHub
 
-const AdminHub = ({ users, catalogs, listas, onNavUsers, onNavCatalogos, onNavListas, onExport, onAudit }) => {
+const AdminHub = ({ users, catalogs, listas, onNavUsers, onNavCatalogos, onNavListas, onNavImpresora, onExport, onAudit }) => {
   const [q, setQ] = useState('');
   const listasMeta = (typeof LISTAS_META !== 'undefined') ? LISTAS_META : [];
   return (
@@ -68,6 +68,25 @@ const AdminHub = ({ users, catalogs, listas, onNavUsers, onNavCatalogos, onNavLi
               ))}
             </div>
           )}
+        </div>
+        <div className="w-8 h-8 rounded-lg hover:bg-surface-mid flex items-center justify-center text-ink-soft shrink-0">
+          <Icon name="chevron_right" />
+        </div>
+      </button>
+
+      <div className="mt-5 flex items-center justify-between">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">Hardware</div>
+      </div>
+      <button
+        onClick={onNavImpresora}
+        className="mt-2 w-full bg-surface-white border border-outline-soft/60 rounded-xl p-3 flex items-start gap-3 hover:border-primary/40 hover:shadow-card active:scale-[0.99] transition text-left"
+      >
+        <div className="w-12 h-12 rounded-lg bg-accent-soft text-[#6b4a10] flex items-center justify-center shrink-0">
+          <Icon name="print" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-ink leading-tight">Impresora Bluetooth</div>
+          <div className="text-[12px] text-ink-soft mt-0.5">Configurar y probar impresora térmica</div>
         </div>
         <div className="w-8 h-8 rounded-lg hover:bg-surface-mid flex items-center justify-center text-ink-soft shrink-0">
           <Icon name="chevron_right" />
@@ -602,4 +621,208 @@ const ListasScreen = ({ listas, onChange, onClose }) => {
   );
 };
 
-Object.assign(window, { AdminHub, UsuariosScreen, CatalogosScreen, ListasScreen, CatalogCard, UserFormModal, CatalogFormModal });
+// ─── Impresora (Bluetooth ESC/POS) ───
+const ImpresoraScreen = ({ onClose }) => {
+  const [busy, setBusy] = useState(false);
+  const [busyMsg, setBusyMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [paired, setPaired] = useState([]);
+  const [discovered, setDiscovered] = useState([]);
+  const [selected, setSelected] = useState(printer.saved());
+  const [connectedTo, setConnectedTo] = useState(null);
+  const [width, setWidthState] = useState(printer.width());
+  const [pluginAvailable] = useState(printer.isAvailable());
+
+  const refreshSaved = () => setSelected(printer.saved());
+
+  const showErr = (e) => setErr(e && e.message ? e.message : String(e));
+
+  const ensureBT = async () => {
+    const enabled = await printer.isEnabled();
+    if (!enabled) {
+      try { await printer.enable(); } catch (e) {
+        throw new Error('Bluetooth deshabilitado. Activalo y reintentá.');
+      }
+    }
+  };
+
+  const buscarPareados = async () => {
+    setErr(''); setBusy(true); setBusyMsg('Listando dispositivos emparejados...');
+    try {
+      await ensureBT();
+      const list = await printer.list();
+      setPaired(Array.isArray(list) ? list : []);
+    } catch (e) { showErr(e); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const escanear = async () => {
+    setErr(''); setBusy(true); setBusyMsg('Buscando dispositivos cercanos (~12s)...');
+    try {
+      await ensureBT();
+      const list = await printer.discoverUnpaired();
+      setDiscovered(Array.isArray(list) ? list : []);
+    } catch (e) { showErr(e); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const conectar = async (dev) => {
+    setErr(''); setBusy(true); setBusyMsg('Conectando a ' + (dev.name || dev.address) + '...');
+    try {
+      await printer.connect(dev.address);
+      await printer.saveSelected(dev.name || 'Impresora', dev.address);
+      setConnectedTo(dev.address);
+      refreshSaved();
+    } catch (e) { showErr(e); setConnectedTo(null); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const desconectar = async () => {
+    setErr(''); setBusy(true); setBusyMsg('Desconectando...');
+    try { await printer.disconnect(); setConnectedTo(null); }
+    catch (e) { showErr(e); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const imprimirPrueba = async () => {
+    setErr(''); setBusy(true); setBusyMsg('Enviando prueba...');
+    try {
+      const conn = await printer.isConnected();
+      if (!conn) {
+        if (!selected.addr) throw new Error('No hay impresora guardada. Conectate una primero.');
+        await printer.connect(selected.addr);
+        setConnectedTo(selected.addr);
+      }
+      await printer.testPrint();
+    } catch (e) { showErr(e); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const olvidar = async () => {
+    setErr(''); setBusy(true); setBusyMsg('Borrando impresora guardada...');
+    try {
+      await printer.disconnect().catch(() => {});
+      await printer.clearSelected();
+      setConnectedTo(null);
+      refreshSaved();
+    } catch (e) { showErr(e); }
+    finally { setBusy(false); setBusyMsg(''); }
+  };
+
+  const cambiarAncho = async (w) => {
+    await printer.setWidth(w);
+    setWidthState(printer.width());
+  };
+
+  // Listado combinado: emparejados + descubiertos sin duplicar
+  const todos = useMemo(() => {
+    const map = {};
+    for (const d of paired) if (d && d.address) map[d.address] = { ...d, paired: true };
+    for (const d of discovered) if (d && d.address && !map[d.address]) map[d.address] = { ...d, paired: false };
+    return Object.values(map);
+  }, [paired, discovered]);
+
+  return (
+    <div className="screen-enter px-5 py-5">
+      <div className="flex items-center gap-2 mb-2">
+        <Icon name="print" className="text-primary" />
+        <h2 className="text-[22px] font-bold text-primary">Impresora Bluetooth</h2>
+      </div>
+      <p className="text-ink-soft text-[13px] mb-4">Configura tu impresora térmica y haz una impresión de prueba.</p>
+
+      {!pluginAvailable && (
+        <div className="rounded-lg bg-warn-soft text-[#6b4a10] text-[12px] px-3 py-2 mb-4">
+          ⚠ Plugin Bluetooth no detectado. Esto solo funciona en el APK Android, no en el preview de browser.
+        </div>
+      )}
+
+      {/* Estado de impresora guardada */}
+      <div className="bg-surface-white border border-outline-soft/60 rounded-xl p-3 mb-4">
+        <div className="text-[11px] uppercase tracking-wider text-ink-soft font-bold mb-1">Impresora guardada</div>
+        {selected.addr ? (
+          <>
+            <div className="font-bold text-ink">{selected.name || 'Impresora'}</div>
+            <div className="text-[12px] text-ink-soft">{selected.addr}</div>
+            <div className="mt-2 flex gap-2">
+              <PrimaryButton onClick={imprimirPrueba} icon="print" className="flex-1" disabled={busy}>Imprimir prueba</PrimaryButton>
+              <SecondaryButton onClick={olvidar} className="flex-1" disabled={busy}>Olvidar</SecondaryButton>
+            </div>
+            {connectedTo === selected.addr && (
+              <div className="mt-2 text-[11px] text-ok">● Conectado en esta sesión</div>
+            )}
+          </>
+        ) : (
+          <div className="text-[13px] text-ink-soft">Ninguna. Escaneá y seleccioná una abajo.</div>
+        )}
+      </div>
+
+      {/* Ancho de papel */}
+      <div className="bg-surface-white border border-outline-soft/60 rounded-xl p-3 mb-4">
+        <div className="text-[11px] uppercase tracking-wider text-ink-soft font-bold mb-2">Ancho de papel</div>
+        <div className="flex gap-2">
+          {[58, 80].map(w => (
+            <button
+              key={w}
+              onClick={() => cambiarAncho(w)}
+              className={'flex-1 py-2 rounded-lg text-[13px] font-semibold border ' + (width === w ? 'bg-primary text-white border-primary' : 'bg-surface-white text-ink border-outline-soft')}
+            >
+              {w} mm
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Buscar impresoras */}
+      <div className="flex gap-2 mb-3">
+        <SecondaryButton onClick={buscarPareados} icon="list" className="flex-1" disabled={busy}>Emparejados</SecondaryButton>
+        <PrimaryButton onClick={escanear} icon="bluetooth_searching" className="flex-1" disabled={busy}>Escanear</PrimaryButton>
+      </div>
+
+      {err && (
+        <div className="rounded-lg bg-err-soft text-err text-[12px] px-3 py-2 mb-3">
+          {err}
+        </div>
+      )}
+
+      {todos.length === 0 && !busy && (
+        <div className="text-[12px] text-ink-soft text-center py-6">
+          Tocá "Emparejados" para ver los dispositivos ya pareados con el sistema,<br />
+          o "Escanear" para buscar nuevos. Asegurate de que la impresora esté encendida.
+        </div>
+      )}
+
+      <div className="space-y-2 mb-6">
+        {todos.map(d => (
+          <button
+            key={d.address}
+            onClick={() => conectar(d)}
+            disabled={busy}
+            className="w-full bg-surface-white border border-outline-soft/60 rounded-xl p-3 flex items-center gap-3 hover:border-primary/40 hover:shadow-card active:scale-[0.99] transition text-left disabled:opacity-50"
+          >
+            <div className="w-10 h-10 rounded-lg bg-primary-soft text-primary flex items-center justify-center shrink-0">
+              <Icon name="bluetooth" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-ink truncate">{d.name || 'Sin nombre'}</div>
+              <div className="text-[11px] text-ink-soft">{d.address}{d.paired ? ' · Emparejado' : ''}</div>
+            </div>
+            <div className="text-[11px] font-semibold text-primary">Conectar</div>
+          </button>
+        ))}
+      </div>
+
+      <SecondaryButton onClick={onClose} className="w-full">Volver</SecondaryButton>
+
+      {busy && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-6">
+          <div className="bg-surface-white rounded-2xl shadow-card px-6 py-5 flex flex-col items-center gap-3 max-w-[280px]">
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <div className="text-[13px] font-semibold text-primary text-center">{busyMsg || 'Procesando...'}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+Object.assign(window, { AdminHub, UsuariosScreen, CatalogosScreen, ListasScreen, ImpresoraScreen, CatalogCard, UserFormModal, CatalogFormModal });
