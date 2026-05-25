@@ -22,7 +22,8 @@
     "@capacitor/preferences": "^6.0.2",
     "@capacitor/splash-screen": "^6.0.2",
     "@capacitor/status-bar": "^6.0.1",
-    "cordova-plugin-bluetooth-serial": "^0.4.7"
+    "cordova-plugin-bluetooth-serial": "^0.4.7",
+    "cordova-plugin-android-permissions": "^1.1.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.1.2"

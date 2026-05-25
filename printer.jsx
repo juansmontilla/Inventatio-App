@@ -104,6 +104,31 @@ const printer = {
   },
   width() { return this._width; },
 
+  // ─── Permisos runtime (Android 12+) ──────────────────────────
+  // En Android 12+ BLUETOOTH_SCAN/CONNECT son "dangerous" permissions
+  // que requieren consentimiento del usuario, además de estar en el manifest.
+  async requestBluetoothPermissions() {
+    const p = (window.cordova && window.cordova.plugins && window.cordova.plugins.permissions) || null;
+    if (!p) return true; // sin plugin, asumimos OK (Android <12 o build distinto)
+    const PERMS = [
+      'android.permission.BLUETOOTH_SCAN',
+      'android.permission.BLUETOOTH_CONNECT',
+      'android.permission.ACCESS_FINE_LOCATION',
+    ];
+    return new Promise((resolve, reject) => {
+      try {
+        p.requestPermissions(
+          PERMS,
+          (status) => {
+            if (status && status.hasPermission) resolve(true);
+            else reject(new Error('Permisos Bluetooth denegados. Activalos en Configuración → Apps → Salvallanta → Permisos.'));
+          },
+          (err) => reject(new Error('No se pudo solicitar permisos: ' + String(err)))
+        );
+      } catch (e) { reject(e); }
+    });
+  },
+
   // ─── Estado del adaptador ────────────────────────────────────
   isEnabled() { return this._call('isEnabled'); },
   enable()    { return this._call('enable'); },

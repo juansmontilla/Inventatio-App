@@ -638,6 +638,9 @@ const ImpresoraScreen = ({ onClose }) => {
   const showErr = (e) => setErr(e && e.message ? e.message : String(e));
 
   const ensureBT = async () => {
+    // 1) Pedir permisos runtime (Android 12+)
+    await printer.requestBluetoothPermissions();
+    // 2) Encender BT si está apagado
     const enabled = await printer.isEnabled();
     if (!enabled) {
       try { await printer.enable(); } catch (e) {
